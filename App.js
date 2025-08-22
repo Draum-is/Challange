@@ -4,7 +4,7 @@ import React from "react";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-// 👉 Init Firebase snemma (með .js endingunni til að forðast slóðarvesen)
+// Init Firebase snemma (einu sinni)
 import "./app/config/firebaseConfig.js";
 
 import HomeScreen from "./app/screens/HomeScreen";
@@ -42,7 +42,7 @@ export default function App() {
           <Stack.Screen
             name="CreateChallenge"
             component={CreateChallengeScreen}
-            options={{ title: "Veldu áskorun", headerBackVisible: false }}
+            options={{ title: "Stjórna / Velja tíma", headerBackVisible: false }}
           />
         </Stack.Navigator>
       </NavigationContainer>

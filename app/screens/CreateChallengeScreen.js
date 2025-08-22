@@ -1,15 +1,9 @@
 // app/screens/CreateChallengeScreen.js
-import React, { useLayoutEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  Keyboard,
-} from "react-native";
+// Blönduð: Handvirkt Start/Stop + Forstilltir tímar (5s, 1/2/4/8 klst, Helgin)
+import React, { useLayoutEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { CommonActions } from "@react-navigation/native";
 import { useChallengeActivity } from "../context/useChallengeActivity";
 
 const PRESETS = [
@@ -22,63 +16,39 @@ const PRESETS = [
 ];
 
 export default function CreateChallengeScreen({ navigation }) {
-  const { startChallengeWithMs, running, stopChallenge } = useChallengeActivity();
+  const { running, mode, startManual, startChallengeWithMs, stopChallenge } = useChallengeActivity();
 
-  // --- „Heim“ ör í hausnum — fer ALLA LEIÐ heim (reset) ---
+  const goHomeReset = () =>
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: "Home" }],
+      })
+    );
+
+  // „Heim“ ör í hausnum (reset — fer alltaf alla leið heim)
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        <TouchableOpacity
-          style={styles.headerBack}
-          onPress={() => navigation.reset({ index: 0, routes: [{ name: "Home" }] })}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
+        <TouchableOpacity style={styles.headerBack} onPress={goHomeReset}>
           <Ionicons name="arrow-back" size={22} color="#66FCF1" />
           <Text style={styles.headerBackText}>Heim</Text>
         </TouchableOpacity>
       ),
-      // tryggjum að system back geri sama (Android back gesture/hnappur)
       gestureEnabled: false,
     });
   }, [navigation]);
 
-  // --- Sérsniðinn tími ---
-  const [customInput, setCustomInput] = useState("");
-
-  const parseCustomMs = (val) => {
-    if (!val) return 0;
-    const t = String(val).trim();
-    if (t.includes(":")) {
-      const [mmRaw, ssRaw] = t.split(":");
-      const mm = parseInt(mmRaw || "0", 10);
-      const ss = parseInt(ssRaw || "0", 10);
-      if (isNaN(mm) || isNaN(ss)) return 0;
-      return Math.max(0, (mm * 60 + ss) * 1000);
-    }
-    const mins = parseInt(t, 10);
-    if (isNaN(mins)) return 0;
-    return Math.max(0, mins * 60 * 1000);
-  };
-
-  const startCustom = () => {
-    const ms = parseCustomMs(customInput);
-    if (ms > 0) {
-      Keyboard.dismiss();
-      startChallengeWithMs(ms, { key: "custom", label: "Sérsniðinn tími" });
-      navigation.reset({ index: 0, routes: [{ name: "Home" }] });
-    }
-  };
-
   const onPick = (preset) => {
     startChallengeWithMs(preset.ms, preset);
-    navigation.reset({ index: 0, routes: [{ name: "Home" }] });
+    goHomeReset();
   };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={[styles.presetBtn, item.key === "p5s" && styles.presetPrimary]}
       onPress={() => onPick(item)}
-      disabled={running}
+      disabled={running && mode === "timer"} // ef timer í gangi, blokkum val til að forðast tvíbyrjun
     >
       <Text style={styles.presetText}>{item.label}</Text>
     </TouchableOpacity>
@@ -86,41 +56,34 @@ export default function CreateChallengeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.info}>Veldu tímalengd fyrir áskorunina</Text>
+      <Text style={styles.title}>Stjórna áskorun</Text>
 
-      {/* Sérsníða */}
-      <View style={styles.customBox}>
-        <Text style={styles.customLabel}>Sérsníða (mm:ss eða mínútur)</Text>
-        <View style={styles.customRow}>
-          <TextInput
-            value={customInput}
-            onChangeText={setCustomInput}
-            placeholder="t.d. 10 eða 05:00"
-            placeholderTextColor="#7A8A8E"
-            keyboardType="numeric"
-            style={styles.input}
-            maxLength={5}
-            returnKeyType="done"
-            onSubmitEditing={startCustom}
-          />
-          <TouchableOpacity
-            style={[
-              styles.startBtn,
-              customInput.trim().length === 0 && styles.startBtnDisabled,
-            ]}
-            onPress={startCustom}
-            disabled={customInput.trim().length === 0}
-          >
-            <Text style={styles.startBtnText}>Byrja</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.hintSmall}>
-          Dæmi: <Text style={styles.codeText}>10</Text> (10 mín) eða{" "}
-          <Text style={styles.codeText}>0:30</Text> (30 sek)
-        </Text>
-      </View>
+      {/* Handstýrt Start/Stop */}
+      {running && mode === "manual" ? (
+        <TouchableOpacity
+          style={[styles.bigBtn, styles.btnDanger]}
+          onPress={() => {
+            stopChallenge(false);
+            goHomeReset();
+          }}
+        >
+          <Text style={styles.bigBtnText}>Stop (handstýrt)</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={styles.bigBtn}
+          onPress={() => {
+            startManual();
+            goHomeReset();
+          }}
+          disabled={running && mode === "timer"}
+        >
+          <Text style={styles.bigBtnText}>Start (handstýrt)</Text>
+        </TouchableOpacity>
+      )}
 
-      {/* Forstillt */}
+      {/* Forstilltir tímar */}
+      <Text style={styles.sectionLabel}>Eða veldu forstilltan tíma</Text>
       <FlatList
         data={PRESETS}
         keyExtractor={(it) => it.key}
@@ -128,18 +91,21 @@ export default function CreateChallengeScreen({ navigation }) {
         contentContainerStyle={styles.list}
       />
 
-      {/* Stoppa ef eitthvað er í gangi */}
-      {running && (
-        <TouchableOpacity style={[styles.presetBtn, styles.stopBtn]} onPress={stopChallenge}>
-          <Text style={styles.presetText}>Stoppa áskorun</Text>
+      {/* Stop hnappur ef timer í gangi */}
+      {running && mode === "timer" && (
+        <TouchableOpacity
+          style={[styles.presetBtn, styles.stopBtn]}
+          onPress={() => {
+            stopChallenge(false);
+            goHomeReset();
+          }}
+        >
+          <Text style={styles.presetText}>Stop (forstilltur)</Text>
         </TouchableOpacity>
       )}
 
-      {/* Belt & axlabönd: heim-takki neðst sem reset-ar ALLTAF */}
-      <TouchableOpacity
-        style={[styles.presetBtn, styles.homeBtn]}
-        onPress={() => navigation.reset({ index: 0, routes: [{ name: "Home" }] })}
-      >
+      {/* Neyðar-heim */}
+      <TouchableOpacity style={[styles.presetBtn, styles.homeBtn]} onPress={goHomeReset}>
         <Text style={styles.presetText}>Heim</Text>
       </TouchableOpacity>
     </View>
@@ -148,10 +114,21 @@ export default function CreateChallengeScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
-  info: { color: "#C5C6C7", marginBottom: 12 },
-  list: { paddingVertical: 8 },
+  title: { fontSize: 22, color: "#66FCF1", fontWeight: "700", marginBottom: 12 },
+  sectionLabel: { color: "#C5C6C7", marginTop: 8, marginBottom: 6 },
+
+  // Handstýrt
+  bigBtn: {
+    backgroundColor: "#45A29E",
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  bigBtnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  btnDanger: { backgroundColor: "#C3073F" },
 
   // Preset
+  list: { paddingVertical: 8 },
   presetBtn: {
     backgroundColor: "#1F2833",
     borderRadius: 14,
@@ -162,38 +139,9 @@ const styles = StyleSheet.create({
   presetPrimary: { backgroundColor: "#45A29E" },
   stopBtn: { backgroundColor: "#C3073F", marginTop: 12 },
   homeBtn: { backgroundColor: "#0F141A", marginTop: 8, borderWidth: 1, borderColor: "#2A333C" },
-  presetText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+  presetText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600", textAlign: "center" },
 
   // Header back
   headerBack: { flexDirection: "row", alignItems: "center" },
   headerBackText: { color: "#66FCF1", marginLeft: 6, fontSize: 16 },
-
-  // Custom time
-  customBox: {
-    backgroundColor: "#151A21",
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
-  },
-  customLabel: { color: "#C5C6C7", marginBottom: 8, fontWeight: "600" },
-  customRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  input: {
-    flex: 1,
-    backgroundColor: "#0F141A",
-    color: "#FFFFFF",
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    fontSize: 16,
-  },
-  startBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: "#45A29E",
-  },
-  startBtnDisabled: { opacity: 0.5 },
-  startBtnText: { color: "#fff", fontWeight: "700" },
-  hintSmall: { color: "#7A8A8E", marginTop: 6 },
-  codeText: { fontFamily: "monospace", color: "#9AD6D2" },
 });

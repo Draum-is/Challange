@@ -6,10 +6,11 @@ import { useChallengeActivity } from "../context/useChallengeActivity";
 export default function HomeScreen({ navigation }) {
   const {
     running,
-    remainingMs,
+    mode,                 // "idle" | "manual" | "timer"
+    remainingMs,          // notað fyrir timer
+    elapsedMs,            // notað fyrir manual
     selectedPreset,
     stopChallenge,
-    hasActiveChallenge,
   } = useChallengeActivity();
 
   const format = (ms) => {
@@ -21,38 +22,39 @@ export default function HomeScreen({ navigation }) {
     return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
   };
 
+  const timeText = mode === "timer" ? format(remainingMs) : format(elapsedMs);
+  const subLabel =
+    mode === "timer"
+      ? selectedPreset?.label ?? "Forstilltur tími"
+      : running
+      ? "Handstýrt (telur upp)"
+      : "Búðu til og byrjaðu!";
+
   return (
     <View style={styles.container}>
-      {hasActiveChallenge ? (
+      {running ? (
         <>
-          <Text style={styles.title}>Áskorun í gangi</Text>
-          <Text style={styles.timer}>{format(remainingMs)}</Text>
-          <Text style={styles.subtitle}>
-            {selectedPreset?.label ?? "Sérsniðinn tími"}
+          <Text style={styles.title}>
+            {mode === "timer" ? "Áskorun í gangi (niður)" : "Áskorun í gangi (upp)"}
           </Text>
+          <Text style={styles.timer}>{timeText}</Text>
+          <Text style={styles.subtitle}>{subLabel}</Text>
 
-          <TouchableOpacity style={[styles.btn, styles.btnDanger]} onPress={stopChallenge}>
-            <Text style={styles.btnText}>Stoppa áskorun</Text>
+          <TouchableOpacity style={[styles.btn, styles.btnDanger]} onPress={() => stopChallenge(false)}>
+            <Text style={styles.btnText}>Stop</Text>
           </TouchableOpacity>
         </>
       ) : (
         <>
           <Text style={styles.title}>Engin áskorun í gangi</Text>
-          <Text style={styles.subtitle}>Búðu til og byrjaðu!</Text>
+          <Text style={styles.subtitle}>{subLabel}</Text>
 
           <TouchableOpacity
             style={styles.btn}
             onPress={() => navigation.navigate("CreateChallenge")}
           >
-            <Text style={styles.btnText}>Búa til áskorun</Text>
+            <Text style={styles.btnText}>Stjórna / Velja tíma</Text>
           </TouchableOpacity>
-
-          <View style={styles.hintBox}>
-            <Text style={styles.hintTitle}>Flýtipróf</Text>
-            <Text style={styles.hintText}>
-              Þú getur notað 5 sek. prófið eða sérsniðið tíma (mm:ss) í „Veldu áskorun“.
-            </Text>
-          </View>
         </>
       )}
     </View>
@@ -61,8 +63,8 @@ export default function HomeScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 24, fontWeight: "700", color: "#66FCF1", marginBottom: 8 },
-  subtitle: { fontSize: 16, color: "#C5C6C7", marginBottom: 24 },
+  title: { fontSize: 24, fontWeight: "700", color: "#66FCF1", marginBottom: 8, textAlign: "center" },
+  subtitle: { fontSize: 16, color: "#C5C6C7", marginBottom: 24, textAlign: "center" },
   timer: { fontSize: 48, color: "#FFFFFF", fontVariant: ["tabular-nums"], marginBottom: 24 },
   btn: {
     backgroundColor: "#45A29E",
@@ -75,13 +77,4 @@ const styles = StyleSheet.create({
   },
   btnDanger: { backgroundColor: "#C3073F" },
   btnText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
-  hintBox: {
-    marginTop: 24,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: "#1F2833",
-    width: "90%",
-  },
-  hintTitle: { color: "#66FCF1", fontWeight: "700", marginBottom: 6 },
-  hintText: { color: "#C5C6C7" },
 });
