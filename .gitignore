@@ -1,0 +1,26 @@
+﻿# Dependencies
+node_modules/
+package-lock.json
+
+# Expo/React Native
+.expo/
+.expo-shared/
+android/app/build/
+ios/DerivedData/
+ios/Pods/
+*.iml
+
+# Build artifacts
+dist/
+build/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Misc
+.env
+.env.*
+*.log
