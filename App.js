@@ -4,7 +4,6 @@ import React from "react";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-// Init Firebase snemma (einu sinni)
 import "./app/config/firebaseConfig.js";
 
 import HomeScreen from "./app/screens/HomeScreen";

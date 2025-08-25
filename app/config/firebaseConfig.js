@@ -1,4 +1,5 @@
-﻿import firebase from "firebase/compat/app";
+﻿// app/config/firebaseConfig.js
+import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import "firebase/compat/firestore";
 
@@ -11,8 +12,15 @@ const firebaseConfig = {
   appId: "1:941220454726:web:f205f41c726ad7cd3e4547",
 };
 
+
+// Passar að Firebase sé ekki endur-upphafsstillt
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 
+// Sameiginlegar tilvísanir
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+export { auth, db };
 export default firebase;

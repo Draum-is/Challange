@@ -5,12 +5,14 @@ import { useChallengeActivity } from "../context/useChallengeActivity";
 
 export default function HomeScreen({ navigation }) {
   const {
-    running,
+    // state
+    running,              // boolean
     mode,                 // "idle" | "manual" | "timer"
-    remainingMs,          // notað fyrir timer
-    elapsedMs,            // notað fyrir manual
-    selectedPreset,
-    stopChallenge,
+    remainingMs,          // ef mode === "timer"
+    elapsedMs,            // ef mode === "manual"
+    selectedPreset,       // { key, label, ms } eða null
+    // actions
+    stopChallenge,        // () => Promise<void>
   } = useChallengeActivity();
 
   const format = (ms) => {
@@ -18,37 +20,42 @@ export default function HomeScreen({ navigation }) {
     const h = Math.floor(total / 3600);
     const m = Math.floor((total % 3600) / 60);
     const s = total % 60;
-    const pad = (n) => String(n).padStart(2, "0");
+    const pad = (n) => n.toString().padStart(2, "0");
     return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
   };
 
-  const timeText = mode === "timer" ? format(remainingMs) : format(elapsedMs);
-  const subLabel =
-    mode === "timer"
-      ? selectedPreset?.label ?? "Forstilltur tími"
-      : running
-      ? "Handstýrt (telur upp)"
-      : "Búðu til og byrjaðu!";
+  const title = running
+    ? mode === "timer"
+      ? "Áskorun í gangi (Niðurtalning)"
+      : "Áskorun í gangi (Handvirk)"
+    : "Engin áskorun í gangi";
+
+  const subLabel = running
+    ? selectedPreset?.label ?? (mode === "manual" ? "Handvirkt tímatal" : "Ónefnd stilling")
+    : "Veldu forstilltan tíma eða ræstu handvirkt";
+
+  const timerText = running
+    ? mode === "timer"
+      ? format(remainingMs)
+      : format(elapsedMs)
+    : "--:--";
 
   return (
     <View style={styles.container}>
-      {running ? (
-        <>
-          <Text style={styles.title}>
-            {mode === "timer" ? "Áskorun í gangi (niður)" : "Áskorun í gangi (upp)"}
-          </Text>
-          <Text style={styles.timer}>{timeText}</Text>
-          <Text style={styles.subtitle}>{subLabel}</Text>
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.subtitle}>{subLabel}</Text>
 
-          <TouchableOpacity style={[styles.btn, styles.btnDanger]} onPress={() => stopChallenge(false)}>
-            <Text style={styles.btnText}>Stop</Text>
-          </TouchableOpacity>
-        </>
+      <Text style={styles.timer}>{timerText}</Text>
+
+      {running ? (
+        <TouchableOpacity
+          style={[styles.btn, styles.btnDanger]}
+          onPress={stopChallenge}
+        >
+          <Text style={styles.btnText}>Stoppa áskorun</Text>
+        </TouchableOpacity>
       ) : (
         <>
-          <Text style={styles.title}>Engin áskorun í gangi</Text>
-          <Text style={styles.subtitle}>{subLabel}</Text>
-
           <TouchableOpacity
             style={styles.btn}
             onPress={() => navigation.navigate("CreateChallenge")}
@@ -62,10 +69,32 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 24, fontWeight: "700", color: "#66FCF1", marginBottom: 8, textAlign: "center" },
-  subtitle: { fontSize: 16, color: "#C5C6C7", marginBottom: 24, textAlign: "center" },
-  timer: { fontSize: 48, color: "#FFFFFF", fontVariant: ["tabular-nums"], marginBottom: 24 },
+  container: {
+    flex: 1,
+    backgroundColor: "#0B0C10",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  title: {
+    fontSize: 22,
+    color: "#FFFFFF",
+    fontWeight: "700",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#C5C6C7",
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  timer: {
+    fontSize: 48,
+    color: "#FFFFFF",
+    fontVariant: ["tabular-nums"],
+    marginBottom: 24,
+  },
   btn: {
     backgroundColor: "#45A29E",
     paddingVertical: 14,
@@ -75,6 +104,12 @@ const styles = StyleSheet.create({
     width: "80%",
     alignItems: "center",
   },
-  btnDanger: { backgroundColor: "#C3073F" },
-  btnText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+  btnDanger: {
+    backgroundColor: "#C3073F",
+  },
+  btnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
 });
