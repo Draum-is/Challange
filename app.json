@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "Challenge",
+    "name": "Phone Challenge",
     "slug": "challenge",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/app-icon-1024-compressed.jpg",
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/images/splash-portrait-compressed.jpg",
+      "image": "./assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#F2F4F7"
     },
@@ -20,13 +20,13 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/app-icon-1024-compressed.jpg",
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#F2F4F7"
       },
       "package": "com.yourname.challenge"
     },
     "web": {
-      "favicon": "./assets/images/logo-512-compressed.jpg"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": []
   }
