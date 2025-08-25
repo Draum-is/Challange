@@ -16,14 +16,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourname.challenge"
+      "bundleIdentifier": "com.draum.PhoneChallenge"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#F2F4F7"
       },
-      "package": "com.yourname.challenge"
+      "package": "com.Draum.PhoneChallenge"
     },
     "web": {
       "favicon": "./assets/images/icon.png"
